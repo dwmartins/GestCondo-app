@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:gestcondo/utils/app_colors.dart';
+import '../services/auth_service.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -12,6 +13,33 @@ class _LoginPageState extends State<LoginPage> {
   bool remember_me = false;
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
+  final AuthService _authService = AuthService();
+
+  bool loading = false;
+
+  Future<void> _login() async {
+    setState(() => loading = true);
+
+    bool success = await _authService.login(
+      _emailController.text,
+      _passwordController.text
+    );
+
+    setState(() => loading = false);
+
+    if(success) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Login realizado com sucesso!")),
+      );
+
+      _emailController.text = "";
+      _passwordController.text = "";
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("E-mail ou senha inválidos")),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -111,7 +139,7 @@ class _LoginPageState extends State<LoginPage> {
                         ),
                       ),
 
-                      const SizedBox(height: 10),
+                      const SizedBox(height: 14),
 
                       SizedBox(
                         width: double.infinity,
@@ -126,6 +154,7 @@ class _LoginPageState extends State<LoginPage> {
                                 'Esqueci minha senha',
                                 style: TextStyle(
                                   color: Colors.blue,
+                                  fontSize: 18
                                 ),
                               ),
                             ),
@@ -133,28 +162,30 @@ class _LoginPageState extends State<LoginPage> {
                         ),
                       ),
 
-                      const SizedBox(height: 10),
+                      const SizedBox(height: 14),
                       
                       SizedBox(
                         width: double.infinity,
+                        height: 50,
                         child: ElevatedButton(
                           style: ElevatedButton.styleFrom(
                             backgroundColor: AppColors.primary,
+                            disabledBackgroundColor: AppColors.primary600,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(8)
                             ),
                           ),
-                          onPressed: () {
-                            print("Login efetuado");
-                          },
-                          child: const Text(
-                            'Entrar',
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white
-                            ),
-                          ),
+                          onPressed: loading ? null : _login,
+                          child: loading
+                              ? CircularProgressIndicator(color: Colors.white)
+                              : const Text(
+                                  'Entrar',
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.white,
+                                  ),
+                                ),
                         ),
                       )
                     ],
