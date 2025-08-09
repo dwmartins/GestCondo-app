@@ -18,6 +18,41 @@ class _LoginPageState extends State<LoginPage> {
   bool loading = false;
 
   Future<void> _login() async {
+    if(_emailController.text.isEmpty || _passwordController.text.isEmpty) {
+      showDialog(
+        context: context,
+        builder: (context) {
+          return AlertDialog(
+            title: const Text(
+              'Erro',
+              style: TextStyle(
+                color: Colors.red
+              ),
+            ),
+            content: const Text(
+              'Por favor, preencha todos os campos.',
+              style: TextStyle(
+                fontSize: 18
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Text(
+                  'OK',
+                  style: TextStyle(
+                    fontSize: 18
+                  ),
+                ),
+              )
+            ],
+          );
+        },
+      );
+
+      return;
+    }
+
     setState(() => loading = true);
 
     bool success = await _authService.login(
