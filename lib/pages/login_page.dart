@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:gestcondo/pages/dashboard_page.dart';
 import 'package:gestcondo/utils/app_colors.dart';
 import '../services/auth_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:convert';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -55,24 +58,36 @@ class _LoginPageState extends State<LoginPage> {
 
     setState(() => loading = true);
 
-    bool success = await _authService.login(
-      _emailController.text,
-      _passwordController.text
-    );
-
-    setState(() => loading = false);
-
-    if(success) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Login realizado com sucesso!")),
+    try {
+      final response = await _authService.login(
+        _emailController.text.trim(), 
+        _passwordController.text.trim()
       );
 
-      _emailController.text = "";
-      _passwordController.text = "";
-    } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("E-mail ou senha inválidos")),
+        SnackBar(content: Text(response['message'])),
       );
+
+      _emailController.clear();
+      _passwordController.clear();
+
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('access_token', response['access_token']);
+      await prefs.setString('user', jsonEncode(response['user']));
+
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const DashboardPage())
+      );
+
+    } catch (e) {
+      final errorMessage = e is String ? e : 'Erro ao realizar login';
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(errorMessage)),
+      );
+    } finally {
+      setState(() => loading = false);
     }
   }
 
@@ -212,7 +227,11 @@ class _LoginPageState extends State<LoginPage> {
                           ),
                           onPressed: loading ? null : _login,
                           child: loading
-                              ? CircularProgressIndicator(color: Colors.white)
+                              ? SizedBox(
+                                  height: 30,
+                                  width: 30,
+                                  child: CircularProgressIndicator(color: Colors.white)
+                                )
                               : const Text(
                                   'Entrar',
                                   style: TextStyle(
